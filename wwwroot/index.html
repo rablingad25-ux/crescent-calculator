@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Hollow Crescent Moon Volume Calculator</title>
+<style>
+  :root{
+    --bg:#1b1530;
+    --panel:#28204a;
+    --panel-2:#322764;
+    --lavender:#c8b6ff;
+    --lavender-2:#b8a4ff;
+    --lavender-soft:#e0d4ff;
+    --accent:#9d7cff;
+    --text:#f3eeff;
+    --muted:#a89dc7;
+    --border:rgba(200,182,255,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:radial-gradient(circle at 20% 0%,#3a2a78 0%,var(--bg) 55%) fixed;
+    color:var(--text);min-height:100vh;overflow-x:hidden;
+  }
+  header{padding:28px 40px 12px;display:flex;align-items:center;gap:14px}
+  .logo{
+    width:38px;height:38px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,var(--lavender-soft) 0%,var(--lavender) 50%,var(--accent) 100%);
+    box-shadow:0 6px 20px rgba(157,124,255,0.55), inset -4px -6px 10px rgba(70,40,140,0.5);
+  }
+  h1{font-size:22px;font-weight:600;letter-spacing:-0.01em}
+  h1 span{color:var(--lavender);font-weight:400}
+  main{
+    display:grid;grid-template-columns:380px 1fr;gap:24px;
+    padding:18px 40px 40px;align-items:stretch;
+  }
+  @media(max-width:980px){main{grid-template-columns:1fr}}
+  .card{
+    background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);
+    border:1px solid var(--border);border-radius:22px;padding:24px;
+    box-shadow:0 18px 40px -20px rgba(0,0,0,0.45);
+  }
+  .card h2{
+    font-size:13px;font-weight:600;text-transform:uppercase;
+    letter-spacing:0.12em;color:var(--lavender);margin-bottom:18px;
+  }
+  .field{margin-bottom:14px}
+  .field label{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;color:var(--muted);margin-bottom:6px;
+  }
+  .field label b{color:var(--lavender-soft);font-weight:500;font-variant-numeric:tabular-nums}
+  .field input[type=range]{
+    width:100%;-webkit-appearance:none;appearance:none;height:4px;
+    background:rgba(200,182,255,0.15);border-radius:4px;outline:none;
+  }
+  .field input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;
+    border-radius:50%;background:var(--lavender);
+    box-shadow:0 0 0 4px rgba(200,182,255,0.18);cursor:pointer;
+  }
+  .field input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--lavender);
+    border:none;cursor:pointer;
+  }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .toggles{display:flex;gap:8px;margin-bottom:14px}
+  .toggles button{
+    flex:1;padding:8px;border-radius:10px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-size:12px;cursor:pointer;
+  }
+  .toggles button.active{background:rgba(200,182,255,0.12);color:var(--lavender);border-color:rgba(200,182,255,0.4)}
+  button.primary{
+    width:100%;margin-top:8px;padding:13px;border:none;border-radius:14px;
+    background:linear-gradient(135deg,var(--lavender) 0%,var(--accent) 100%);
+    color:#1b1530;font-weight:600;font-size:14px;letter-spacing:0.02em;
+    cursor:pointer;transition:.15s;
+    box-shadow:0 8px 22px -8px rgba(157,124,255,0.7);
+  }
+  button.primary:hover{transform:translateY(-1px);box-shadow:0 12px 28px -8px rgba(157,124,255,0.9)}
+
+  .viewer{position:relative;min-height:580px;padding:0;overflow:hidden}
+  #canvas3d{position:absolute;inset:0;display:block;width:100%;height:100%}
+  .viewer-label{
+    position:absolute;top:18px;left:22px;font-size:11px;
+    text-transform:uppercase;letter-spacing:0.16em;color:var(--lavender);opacity:0.75;z-index:2;
+  }
+
+  .results{margin-top:22px}
+  .results .row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:10px 0;border-bottom:1px dashed var(--border);
+  }
+  .results .row:last-child{border-bottom:none}
+  .results .row span:first-child{font-size:12px;color:var(--muted)}
+  .results .row span:last-child{font-size:15px;font-variant-numeric:tabular-nums;color:var(--lavender-soft)}
+  .results .total{
+    margin-top:12px;padding:14px 16px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(200,182,255,0.12),rgba(157,124,255,0.05));
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .results .total span:first-child{font-size:12px;text-transform:uppercase;letter-spacing:0.12em;color:var(--lavender)}
+  .results .total span:last-child{font-size:24px;font-weight:600;color:var(--text)}
+  .err{color:#ff9bbf;font-size:12px;margin-top:8px;min-height:16px}
+  footer{text-align:center;padding:16px;font-size:11px;color:var(--muted);opacity:0.7}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"></div>
+  <h1>Hollow Crescent Moon <span>· Two-Sphere Volume Calculator</span></h1>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Parameters</h2>
+
+    <div class="field">
+      <label>Outer sphere radius (R) <b><span id="vR">5.0</span></b></label>
+      <input type="range" id="R" min="2" max="10" step="0.1" value="5" />
+    </div>
+    <div class="field">
+      <label>Cutter sphere radius (r) <b><span id="vr">4.0</span></b></label>
+      <input type="range" id="r" min="1" max="9" step="0.1" value="4" />
+    </div>
+    <div class="field">
+      <label>Center offset (d) <b><span id="vd">3.0</span></b></label>
+      <input type="range" id="d" min="0.5" max="14" step="0.1" value="3" />
+    </div>
+    <div class="field">
+      <label>Wall thickness (t) <b><span id="vt">0.4</span></b></label>
+      <input type="range" id="t" min="0.1" max="2" step="0.05" value="0.4" />
+    </div>
+
+    <h2 style="margin-top:8px">View</h2>
+    <div class="toggles">
+      <button data-mode="solid" class="active">Solid</button>
+      <button data-mode="cutaway">Cutaway</button>
+      <button data-mode="circles">Circles</button>
+    </div>
+
+    <button class="primary" id="calcBtn">Calculate Volume</button>
+    <div class="err" id="err"></div>
+
+    <div class="results" id="results" style="display:none">
+      <div class="row"><span>Outer sphere volume</span><span id="oS">—</span></div>
+      <div class="row"><span>Overlap (lens) volume</span><span id="oV">—</span></div>
+      <div class="row"><span>Crescent volume</span><span id="cV">—</span></div>
+      <div class="row"><span>Inner cavity volume</span><span id="iV">—</span></div>
+      <div class="total"><span>Shell Volume</span><span id="sV">—</span></div>
+    </div>
+  </section>
+
+  <section class="card viewer">
+    <div class="viewer-label">3D Preview · drag to rotate</div>
+    <canvas id="canvas3d"></canvas>
+  </section>
+</main>
+
+<footer>Built with .NET 10 · Three.js · Two revolved circles · Lavender dreams</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const inputs = {
+  R: document.getElementById('R'),
+  r: document.getElementById('r'),
+  d: document.getElementById('d'),
+  t: document.getElementById('t'),
+};
+const labels = {R:'vR',r:'vr',d:'vd',t:'vt'};
+Object.keys(inputs).forEach(k=>{
+  inputs[k].addEventListener('input',()=>{
+    document.getElementById(labels[k]).textContent = (+inputs[k].value).toFixed(1);
+    rebuild();
+  });
+});
+
+let viewMode = 'solid';
+document.querySelectorAll('.toggles button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.toggles button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    viewMode = b.dataset.mode;
+    rebuild();
+  });
+});
+
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45,1,0.1,500);
+camera.position.set(18,12,22);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0xc8b6ff, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 0.95);
+key.position.set(8,12,10); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9d7cff, 0.85);
+rim.position.set(-10,4,-8); scene.add(rim);
+
+const glow = new THREE.Mesh(
+  new THREE.CircleGeometry(22, 64),
+  new THREE.MeshBasicMaterial({color:0x9d7cff, transparent:true, opacity:0.08})
+);
+glow.rotation.x = -Math.PI/2; glow.position.y = -8; scene.add(glow);
+
+const group = new THREE.Group();
+scene.add(group);
+
+function clearGroup(){
+  while(group.children.length){
+    const c = group.children.pop();
+    c.geometry?.dispose();
+    if(Array.isArray(c.material)) c.material.forEach(m=>m.dispose());
+    else c.material?.dispose();
+  }
+}
+
+/**
+ * Build a crescent surface from two spheres using a custom shader that
+ * clips at the pixel level in OBJECT SPACE:
+ *   - Outer sphere (centered at object origin): discard fragments whose
+ *     local position lies inside the cutter sphere.
+ *   - Cutter sphere (translated locally to (d,0,0) inside its parent
+ *     pivot): render its BACK FACES and discard fragments outside the
+ *     outer sphere; flip the normal so the concave bite shades like an
+ *     outward face of the moon.
+ */
+const CRESCENT_VS = `
+  varying vec3 vLocalPos;
+  varying vec3 vNormal;
+  void main(){
+    vLocalPos = position;
+    vNormal   = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+  }
+`;
+const CRESCENT_FS = `
+  precision highp float;
+  uniform vec3  uColor;
+  uniform vec3  uRimColor;
+  uniform float uOpacity;
+  uniform vec3  uLightDir;
+  uniform vec3  uCutterCenter;   // in this mesh's LOCAL space
+  uniform float uCutterRadius;
+  uniform float uOuterRadius;
+  uniform float uMode;            // 0 = outer sphere, 1 = cutter sphere bite
+  varying vec3 vLocalPos;
+  varying vec3 vNormal;
+  void main(){
+    if(uMode < 0.5){
+      // Outer sphere: discard if inside the cutter
+      if(length(vLocalPos - uCutterCenter) < uCutterRadius - 0.0005) discard;
+    } else {
+      // Cutter sphere: discard if outside the outer sphere
+      // (this mesh's local origin is offset by uCutterCenter from outer's origin)
+      vec3 outerLocal = vLocalPos + uCutterCenter;
+      if(length(outerLocal) > uOuterRadius - 0.0005) discard;
+    }
+    vec3 N = normalize(vNormal);
+    if(uMode > 0.5) N = -N; // concave bite faces outward
+    vec3 L = normalize(uLightDir);
+    float diff = max(dot(N, L), 0.0);
+    float ambient = 0.32;
+    float rim = pow(1.0 - max(dot(N, vec3(0.0, 0.0, 1.0)), 0.0), 2.5) * 0.55;
+    vec3 col = uColor * (ambient + 0.78 * diff) + uRimColor * rim;
+    // soft sheen
+    vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+    float spec = pow(max(dot(N, H), 0.0), 24.0) * 0.18;
+    col += vec3(1.0) * spec;
+    gl_FragColor = vec4(col, uOpacity);
+  }
+`;
+
+function makeCrescentMaterial(colorHex, opacity, mode){
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColor:        { value: new THREE.Color(colorHex) },
+      uRimColor:     { value: new THREE.Color(0x9d7cff) },
+      uOpacity:      { value: opacity },
+      uLightDir:     { value: new THREE.Vector3(0.55, 0.85, 0.55).normalize() },
+      uCutterCenter: { value: new THREE.Vector3() },
+      uCutterRadius: { value: 1 },
+      uOuterRadius:  { value: 1 },
+      uMode:         { value: mode === 'cutter' ? 1.0 : 0.0 },
+    },
+    vertexShader: CRESCENT_VS,
+    fragmentShader: CRESCENT_FS,
+    side: mode === 'cutter' ? THREE.BackSide : THREE.FrontSide,
+    transparent: opacity < 1,
+    depthWrite: opacity >= 1,
+  });
+}
+
+function buildCrescentMesh(R, r, d, color, opacity=1){
+  const group = new THREE.Group();
+  const segs = 128;
+
+  const outerMat = makeCrescentMaterial(color, opacity, 'outer');
+  outerMat.uniforms.uCutterCenter.value.set(d, 0, 0);
+  outerMat.uniforms.uCutterRadius.value = r;
+  outerMat.uniforms.uOuterRadius.value  = R;
+  const outer = new THREE.Mesh(new THREE.SphereGeometry(R, segs, segs/2), outerMat);
+  group.add(outer);
+
+  const cutterMat = makeCrescentMaterial(color, opacity, 'cutter');
+  // In the cutter's local frame, the offset to the outer-sphere origin
+  // is (d, 0, 0): for a point with local position p, its position in the
+  // outer-sphere frame is p + (d,0,0).
+  cutterMat.uniforms.uCutterCenter.value.set(d, 0, 0);
+  cutterMat.uniforms.uCutterRadius.value = r;
+  cutterMat.uniforms.uOuterRadius.value  = R;
+  const cutter = new THREE.Mesh(new THREE.SphereGeometry(r, segs, segs/2), cutterMat);
+  cutter.position.set(d, 0, 0);
+  group.add(cutter);
+
+  return group;
+}
+
+function buildCirclesView(R, r, d){
+  const g = new THREE.Group();
+  const ringMat1 = new THREE.LineBasicMaterial({color:0xc8b6ff});
+  const ringMat2 = new THREE.LineBasicMaterial({color:0x9d7cff});
+  // Two great circles + two spheres rendered as wireframe-like
+  g.add(new THREE.Mesh(
+    new THREE.SphereGeometry(R, 48, 24),
+    new THREE.MeshPhysicalMaterial({color:0xc8b6ff, transparent:true, opacity:0.18, side:THREE.DoubleSide})
+  ));
+  const cutterMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(r, 48, 24),
+    new THREE.MeshPhysicalMaterial({color:0x9d7cff, transparent:true, opacity:0.30, side:THREE.DoubleSide})
+  );
+  cutterMesh.position.x = d;
+  g.add(cutterMesh);
+  // The two generating circles (in the xy-plane)
+  const c1 = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(circlePts(R, 0, 128)),
+    ringMat1
+  );
+  const c2 = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(circlePts(r, d, 128)),
+    ringMat2
+  );
+  g.add(c1, c2);
+  // axis of revolution (y-axis)
+  g.add(new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04,0.04, R*3, 16),
+    new THREE.MeshBasicMaterial({color:0xe0d4ff, transparent:true, opacity:0.5})
+  ));
+  return g;
+}
+function circlePts(radius, cx, n){
+  const arr = [];
+  for(let i=0;i<=n;i++){
+    const a = (i/n) * Math.PI*2;
+    arr.push(new THREE.Vector3(cx + radius*Math.cos(a), radius*Math.sin(a), 0));
+  }
+  return arr;
+}
+
+function rebuild(){
+  clearGroup();
+  const R = +inputs.R.value, r = +inputs.r.value, d = +inputs.d.value;
+  const t = +inputs.t.value;
+
+  // Geometry guard
+  if(d >= R + r || d + r <= R || d + R <= r) return;
+
+  if(viewMode === 'circles'){
+    group.add(buildCirclesView(R, r, d));
+  } else if(viewMode === 'cutaway'){
+    group.add(buildCrescentMesh(R, r, d, 0xc8b6ff, 0.32));
+    const scale = (R - t)/R;
+    group.add(buildCrescentMesh(R*scale, r*scale, d*scale, 0x9d7cff, 1));
+  } else {
+    group.add(buildCrescentMesh(R, r, d, 0xc8b6ff, 1));
+  }
+}
+
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(canvas.width !== w || canvas.height !== h){
+    renderer.setSize(w, h, false);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+}
+function animate(){
+  resize();
+  controls.update();
+  group.rotation.y += 0.0035;
+  renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+}
+rebuild();
+animate();
+
+document.getElementById('calcBtn').addEventListener('click', async ()=>{
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const body = {
+    outerRadius:+inputs.R.value,
+    cutterRadius:+inputs.r.value,
+    centerOffset:+inputs.d.value,
+    wallThickness:+inputs.t.value,
+  };
+  try{
+    const res = await fetch('/api/calculate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(!res.ok){
+      const e = await res.json().catch(()=>({error:'Request failed'}));
+      err.textContent = e.error || 'Calculation failed';
+      return;
+    }
+    const d = await res.json();
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('oS').textContent = d.outerSphereVolume.toFixed(3);
+    document.getElementById('oV').textContent = d.overlapVolume.toFixed(3);
+    document.getElementById('cV').textContent = d.crescentVolume.toFixed(3);
+    document.getElementById('iV').textContent = d.innerCavityVolume.toFixed(3);
+    document.getElementById('sV').textContent = d.shellVolume.toFixed(3) + ' u³';
+  }catch(e){
+    err.textContent = 'Network error: ' + e.message;
+  }
+});
+</script>
+</body>
+</html>
